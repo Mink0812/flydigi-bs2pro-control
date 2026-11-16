@@ -6,6 +6,8 @@ Control the lights and fan of a **Flydigi BS2 / BS2 Pro** laptop cooler on Windo
 
 There's nothing to install and nothing left running in the background. It uses the Bluetooth support and PowerShell that already come with Windows 10/11. Run it when you need it and close it when you're done.
 
+![BS2 Pro Control](screenshot.png)
+
 ## Features
 
 - **One-click lights off**: `BS2Pro-LED-Off.cmd` turns off the RGB strip and the gear indicator LEDs, then exits.
