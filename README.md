@@ -23,6 +23,12 @@ There's nothing to install and nothing left running in the background. It uses t
 - Windows PowerShell 5.1. It's built into Windows; PowerShell 7 is **not** needed.
 - A Flydigi BS2 or BS2 Pro, **paired** in *Settings → Bluetooth & devices*
 
+## Pairing the cooler (first time only)
+
+1. **Put the cooler in pairing mode:** press and hold its button until the cooler turns off completely. Then turn it back on. When the lights are **blinking**, it's ready to pair.
+2. On Windows, go to *Settings → Bluetooth & devices → Add device → Bluetooth* and pick **FlyDigi BS2PRO**.
+3. Once it shows as *Connected*, you're set. Next time, just turn the cooler on and it reconnects by itself.
+
 ## How to use
 
 1. Download the latest ZIP from the [Releases](../../releases) page and extract it anywhere.
@@ -57,7 +63,7 @@ Press `Win + R`, type `shell:startup` and press Enter. Put a **shortcut** to `BS
 
 | Message | Fix |
 | --- | --- |
-| `No paired Flydigi BS2 cooler found` | Pair the cooler in *Settings → Bluetooth & devices*. If its name doesn't contain "FlyDigi" or "BS2", edit `$NameMatch` at the top of `bs2pro-control.ps1`. |
+| `No paired Flydigi BS2 cooler found` | Pair the cooler first (see [Pairing the cooler](#pairing-the-cooler-first-time-only)). If its name doesn't contain "FlyDigi" or "BS2", edit `$NameMatch` at the top of `bs2pro-control.ps1`. |
 | `The cooler is not connected` / `Service 0xFFF0 not found` | Turn the cooler on and make sure Windows shows it as *Connected*. |
 | The page says *Script stopped* | The console window was closed. Run `BS2Pro-Control.cmd` again. |
 | The page doesn't open | Open `http://localhost:17865` in any browser while the console window is running. |
