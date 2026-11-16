@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BS2 Pro Control</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--line:#262b36;--text:#e6e8ee;--mute:#8b93a7;--acc:#2fd6a8;--acc2:#1a7f66;--err:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  .dot{width:9px;height:9px;border-radius:50%;background:#555}
+  .dot.on{background:var(--acc);box-shadow:0 0 8px var(--acc)}
+  #connState{color:var(--mute)}
+  .spacer{flex:1}
+  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;padding:16px 20px;max-width:1200px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);font-weight:600}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0}
+  .row+.row{border-top:1px solid var(--line)}
+  .sub{color:var(--mute);font-size:12px}
+  button{font:inherit;border:1px solid var(--line);background:#1f2430;color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer}
+  button:hover:not(:disabled){border-color:var(--acc2)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#05231b;font-weight:600}
+  button.big{width:100%;padding:12px;font-weight:600}
+  .pair{display:flex;gap:6px}
+  .pair button{min-width:56px}
+  .gears{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 10px}
+  select,input[type=color]{font:inherit;background:#1f2430;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+  input[type=color]{padding:2px;width:48px;height:32px}
+  input[type=range]{width:100%;accent-color:var(--acc)}
+  .val{font-variant-numeric:tabular-nums;color:var(--mute);min-width:70px;text-align:right}
+  #log{height:160px;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap}
+  #log .err{color:var(--err)} #log .ok{color:var(--acc)}
+  .note{background:#211d10;border:1px solid #4a3d12;color:#e8d9a8;border-radius:10px;padding:10px 12px;font-size:12.5px;margin:12px auto 0;max-width:1160px}
+  .wide{grid-column:1/-1}
+</style>
+</head>
+<body>
+<header>
+  <div class="dot" id="dot"></div>
+  <h1>Flydigi BS2 Pro</h1>
+  <span id="connState">Not connected</span>
+  <div class="spacer"></div>
+  <button id="btnConnect">Reconnect</button>
+  <button id="btnQuit">Quit</button>
+</header>
+
+<div class="note" id="srvDown" hidden>Lost contact with the script. Run <b>BS2Pro-Control.cmd</b> again (its console window must stay open while you use this page).</div>
+
+<main>
+  <section class="card">
+    <h2>Lights</h2>
+    <button class="big ctl primary" id="btnAllOff" disabled>Turn all lights off</button>
+    <div class="row" style="margin-top:8px">
+      <span>RGB light strip</span>
+      <div class="pair"><button class="ctl" data-cmd="70" data-v="1" disabled>On</button><button class="ctl" data-cmd="70" data-v="0" disabled>Off</button></div>
+    </div>
+    <div class="row">
+      <span>Gear indicator LEDs</span>
+      <div class="pair"><button class="ctl" data-cmd="72" data-v="1" disabled>On</button><button class="ctl" data-cmd="72" data-v="0" disabled>Off</button></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Lighting effect</h2>
+    <div class="row">
+      <span>Effect</span>
+      <select id="fx" class="ctl" disabled>
+        <option value="solid">Solid colour</option>
+        <option value="breathe">Breathing</option>
+        <option value="rainbow">Rainbow</option>
+      </select>
+    </div>
+    <div class="row"><span>Colour</span><input type="color" id="color" value="#00e0b8" class="ctl" disabled></div>
+    <div class="row"><span>Brightness</span><span class="val" id="vBright">60%</span></div>
+    <input type="range" id="bright" min="0" max="100" value="60" class="ctl" disabled>
+    <div class="row"><span>Effect speed <span class="sub">(higher = slower)</span></span><span class="val" id="vSpeed">15</span></div>
+    <input type="range" id="speed" min="1" max="60" value="15" class="ctl" disabled>
+    <button class="big ctl primary" id="btnApplyFx" style="margin-top:12px" disabled>Apply effect</button>
+    <div class="sub" style="margin-top:6px">Saved on the cooler, kept after unplugging.</div>
+  </section>
+
+  <section class="card">
+    <h2>Fan</h2>
+    <div class="sub">Gear (saved on the cooler)</div>
+    <div class="gears">
+      <button class="ctl gearBtn" data-g="1" disabled>1</button>
+      <button class="ctl gearBtn" data-g="2" disabled>2</button>
+      <button class="ctl gearBtn" data-g="3" disabled>3</button>
+      <button class="ctl gearBtn" data-g="4" disabled>4</button>
+    </div>
+    <div class="row"><span>Custom speed</span><span class="val" id="vRpm">2400 RPM</span></div>
+    <input type="range" id="rpm" min="1300" max="4000" step="100" value="2400" class="ctl" disabled>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="ctl" id="btnRpm" style="flex:1" disabled>Set this speed</button>
+      <button class="ctl" id="btnExitCustom" style="flex:1" disabled>Back to gear mode</button>
+    </div>
+    <div class="sub" style="margin-top:6px">Custom speed is dropped when the script disconnects. Max ~2700 RPM on 5 V, ~3300 RPM on 9 V, 4000 RPM on PD 20 V.</div>
+  </section>
+
+  <section class="card">
+    <h2>Settings</h2>
+    <div class="row">
+      <span>Start when powered</span>
+      <select id="autoStart" class="ctl" disabled><option value="" selected disabled>Choose…</option><option value="1">On</option><option value="2">Off</option></select>
+    </div>
+    <div class="row">
+      <span>Sleep when disconnected</span>
+      <select id="standby" class="ctl" disabled>
+        <option value="" selected disabled>Choose…</option>
+        <option value="0">Never</option>
+        <option value="1">Immediately</option>
+        <option value="2">60 s after disconnect</option>
+      </select>
+    </div>
+    <div class="row">
+      <span>Fan ramp</span>
+      <select id="ramp" class="ctl" disabled>
+        <option value="" selected disabled>Choose…</option>
+        <option value="0">Gentle</option><option value="1">Default</option>
+        <option value="2">Fast</option><option value="3">Fastest</option>
+      </select>
+    </div>
+    <div class="row"><span>Wake the cooler</span><button class="ctl" id="btnWake" disabled>Wake</button></div>
+  </section>
+
+  <section class="card wide">
+    <h2>Activity</h2>
+    <div id="log"></div>
+  </section>
+</main>
+<footer style="text-align:center;color:var(--mute);font-size:12px;padding:4px 0 20px">
+  Made by <a href="https://github.com/Mink0812" target="_blank" style="color:var(--acc)">Mink0812</a> ·
+  <a href="https://github.com/Mink0812/flydigi-bs2pro-control" target="_blank" style="color:var(--acc)">GitHub</a>
+</footer>
+
+<script>
+// Served by bs2pro-control.ps1 on http://localhost:17865. Commands go through PowerShell (Windows Bluetooth API).
+// Protocol: GATT service 0xFFF0, write 0xFFF2. Frame: 5A A5 <cmd> <len> <payload> <checksum>
+const $ = id => document.getElementById(id);
+const le16 = v => [v & 0xff, (v >> 8) & 0xff];
+let pending = [], flushing = null, connected = null, lastErr = '';
+
+function log(msg, cls = '') {
+  const el = $('log'), line = document.createElement('div');
+  line.textContent = `${new Date().toLocaleTimeString()}  ${msg}`;
+  if (cls) line.className = cls;
+  el.appendChild(line);
+  while (el.childNodes.length > 200) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function send(cmd, payload = []) {
+  pending.push({ c: cmd, p: payload });
+  if (!flushing) flushing = (async () => {
+    while (pending.length) {
+      const batch = pending.splice(0);
+      try {
+        const j = await (await fetch('/api/send', { method: 'POST', body: JSON.stringify(batch) })).json();
+        if (!j.ok) log('Error: ' + j.error, 'err');
+      } catch (e) { log('Could not reach the script: ' + e.message, 'err'); }
+    }
+    flushing = null;
+  })();
+  return flushing;
+}
+
+function setConnected(on, name = '') {
+  if (on === connected) return;
+  connected = on;
+  $('dot').classList.toggle('on', on);
+  $('connState').textContent = on ? `Connected: ${name}` : 'Not connected';
+  document.querySelectorAll('.ctl').forEach(el => el.disabled = !on);
+  log(on ? 'Connected to the cooler' : 'Not connected to the cooler', on ? 'ok' : '');
+}
+
+async function poll() {
+  try {
+    const j = await (await fetch('/api/poll')).json();
+    $('srvDown').hidden = true;
+    setConnected(j.connected, j.name);
+    if (j.error && j.error !== lastErr) log(j.error, 'err');
+    lastErr = j.error;
+  } catch {
+    $('srvDown').hidden = false;
+    setConnected(false);
+    $('connState').textContent = 'Script stopped';
+  }
+  setTimeout(poll, 1000);
+}
+
+// Effect buffer: [0]=0 [1]=2 [2]=loop start [3]=frames-1 [4]=speed [5]=brightness, then RGB at 6 + led*30 + frame*3
+const LEDS = 10;
+const RAINBOW = [[255,0,0],[255,160,0],[0,255,0],[0,200,255],[0,0,255],[200,0,255]];
+function buildFx(effect, color, speed, bright) {
+  const c = [1, 3, 5].map(i => parseInt(color.substr(i, 2), 16));
+  const frames = Array.from({ length: LEDS }, (_, led) =>
+    effect === 'solid' ? [c] : effect === 'breathe' ? [[0, 0, 0], c] :
+    RAINBOW.map((_, f) => RAINBOW[(f + led) % RAINBOW.length]));
+  const buf = new Array(6 + LEDS * 30).fill(0);
+  buf[1] = 2; buf[3] = frames[0].length - 1; buf[4] = speed; buf[5] = bright;
+  frames.forEach((list, led) => list.forEach((rgb, f) => buf.splice(6 + led * 30 + f * 3, 3, ...rgb)));
+  return buf;
+}
+
+async function applyFx() {
+  const buf = buildFx($('fx').value, $('color').value, +$('speed').value, +$('bright').value);
+  log('Uploading effect...');
+  send(0x41);
+  for (let i = 0; i * 10 < buf.length; i++) {
+    const chunk = buf.slice(i * 10, i * 10 + 10);
+    while (chunk.length < 10) chunk.push(0);
+    send(0x47, [i, ...chunk]);
+  }
+  send(0x43, [1]);
+  send(0x44, [0]);
+  await send(0x46, [1]);
+  log('Effect applied', 'ok');
+}
+
+function act(label, ...cmds) {
+  log(label);
+  let p;
+  for (const [c, payload] of cmds) p = send(c, payload);
+  return p;
+}
+
+// --- UI ---
+setConnected(false);
+$('btnConnect').onclick = async () => {
+  log('Reconnecting...');
+  try {
+    const j = await (await fetch('/api/connect', { method: 'POST' })).json();
+    if (!j.ok) log('Connect failed: ' + j.error, 'err');
+  } catch { log('Could not reach the script', 'err'); }
+};
+$('btnQuit').onclick = async () => {
+  try { await fetch('/api/quit', { method: 'POST' }); } catch {}
+  window.close();   // works for the app window / a tab opened by the script
+  setTimeout(() => {  // the browser refused to close it
+    document.body.innerHTML = '<p style="padding:40px;text-align:center;color:#8b93a7">Stopped. You can close this tab.</p>';
+  }, 300);
+};
+$('btnAllOff').onclick = () => act('All lights off', [0x46, [0]], [0x48, [0]]);
+document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => {
+  const what = b.dataset.cmd === '70' ? 'Light strip' : 'Gear LEDs';
+  act(`${what} ${b.dataset.v === '1' ? 'on' : 'off'}`, [+b.dataset.cmd, [+b.dataset.v]]);
+});
+$('bright').oninput = e => $('vBright').textContent = e.target.value + '%';
+$('speed').oninput = e => $('vSpeed').textContent = e.target.value;
+$('btnApplyFx').onclick = applyFx;
+document.querySelectorAll('.gearBtn').forEach(b => b.onclick = () => act(`Gear ${b.dataset.g}`, [0x08, [+b.dataset.g]]));
+$('rpm').oninput = e => $('vRpm').textContent = e.target.value + ' RPM';
+$('btnRpm').onclick = () => act(`Custom speed ${$('rpm').value} RPM`, [0x23, []], [0x21, le16(+$('rpm').value)]);
+$('btnExitCustom').onclick = () => act('Back to gear mode', [0x24, []]);
+$('autoStart').onchange = e => act(`Start when powered: ${e.target.selectedOptions[0].text}`, [0x0c, [+e.target.value]]);
+$('standby').onchange = e => act(`Sleep when disconnected: ${e.target.selectedOptions[0].text}`, [0x0d, [+e.target.value]]);
+$('ramp').onchange = e => act(`Fan ramp: ${e.target.selectedOptions[0].text}`, [0x2a, [+e.target.value]]);
+$('btnWake').onclick = () => act('Wake', [0x05, []]);
+poll();
+</script>
+</body>
+</html>
